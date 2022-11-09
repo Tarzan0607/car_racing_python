@@ -1,7 +1,7 @@
 def load_window(tk, title, size_y, size_x):
     gamewindow = tk.Tk()
 
-    gamewindow.title('Python 2player racing game')
+    gamewindow.title(title)
 
     screen_width = gamewindow.winfo_screenwidth()
     screen_height = gamewindow.winfo_screenheight()
