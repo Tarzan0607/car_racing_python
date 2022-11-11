@@ -42,66 +42,63 @@ car2_resize = car2_image.resize((214, 92), Image.ANTIALIAS)
 car2_drive = ImageTk.PhotoImage(car2_resize)
 car2_frame = canvas.create_image(150, 600, anchor=NW, image=car2_drive)
 
-# car_track.tkraise()
-
-
-def boost1():
-    print('boost1')
-
-
-def boost_scroll():
-    print()
-
-
 obstacle_image = Image.open('image/obstacle.png')
 obstacle_image1 = ImageTk.PhotoImage(obstacle_image)
-obstacle_item = canvas.create_image(
-    1600, random.randint(50, 850), image=obstacle_image1)
 
 boost_image = Image.open('image/boost.png')
 boost_image1 = ImageTk.PhotoImage(boost_image)
-boost_item = canvas.create_image(
-    1600, random.randint(50, 850), image=boost_image1)
+
+win_line = Image.open('image/finishline.png')
+win_line1 = ImageTk.PhotoImage(win_line)
+#win_item = canvas.create_image(1600, 100, anchor=NE, image=win_line1)
 
 
-def boosts():
+def obstacle_item():
+    global obstacle_item
+    obstacle_item = canvas.create_image(
+        1600, random.randint(150, 750), image=obstacle_image1)
+
+
+def boost_item():
+    global boost_item
     boost_item = canvas.create_image(
-        1600, random.randint(50, 850), image=boost_image1)
+        1600, random.randint(150, 750), image=boost_image1)
 
 
-canvas.after(1000, boosts)
-
-boost2 = time.time() + 3
-boost3 = time.time() + 5
-boost4 = time.time() + 7
-boost5 = time.time() + 9
-boost6 = time.time() + 11
-boost7 = time.time() + 13
-boost8 = time.time() + 15
-boost9 = time.time() + 17
-boost10 = time.time() + 19
-
-obstacle1 = time.time() + 2
-obstacle2 = time.time() + 4
-obstacle3 = time.time() + 6
-obstacle4 = time.time() + 8
-obstacle5 = time.time() + 10
-obstacle6 = time.time() + 12
-obstacle7 = time.time() + 14
-obstacle8 = time.time() + 16
-obstacle9 = time.time() + 18
-
-end_time = time.time() + 20
-
-
-def win_line():
-    print
+def win_line2():
+    global win_line2
+    win_line2 = canvas.create_image(1600, 100, anchor=NE, image=win_line1)
 
 
 def win_line_scroll():
-    canvas.after(20000, print('game done'))
-    tk_sleep(win, 1/60)
-    track_move = canvas.move(track_frame, -15, 0)
+    win_line_scroll
+    canvas.move(win_line2, -500, 0)
+
+
+win.after(1000, boost_item)
+win.after(3000, boost_item)
+win.after(5000, boost_item)
+win.after(7000, boost_item)
+win.after(9000, boost_item)
+win.after(11000, boost_item)
+win.after(13000, boost_item)
+win.after(15000, boost_item)
+win.after(17000, boost_item)
+win.after(19000, boost_item)
+
+win.after(2000, obstacle_item)
+win.after(4000, obstacle_item)
+win.after(6000, obstacle_item)
+win.after(8000, obstacle_item)
+win.after(10000, obstacle_item)
+win.after(12000, obstacle_item)
+win.after(14000, obstacle_item)
+win.after(16000, obstacle_item)
+win.after(18000, obstacle_item)
+
+win.after(10000, win_line2)
+
+end_time = time.time() + 22
 
 
 def channel_user(user, message):
@@ -152,15 +149,6 @@ def __init__(self, master=None):
     self.movement()
 
 
-def movement(self):
-
-    # This is where the move() method is called
-    # This moves the rectangle to x, y coordinates
-    self.canvas.move(self.rectangle, self.x, self.y)
-
-    self.canvas.after(1000, self.movement)
-
-
 def up(e):
     x = 0
     y = -20
@@ -197,30 +185,14 @@ if __name__ == "__main__":
 def track_scroll():
     tk_sleep(win, 1/60)
     track_move = canvas.move(track_frame, -15, 0)
-    obstacle_move = canvas.move(obstacle_item, -10, 0)
-    boost_move = canvas.move(boost_item, -10, 0)
-
-
-def game_time():
-    if start_time == end_time:
-        print('time up')
-    else:
-        time.sleep(25)
-        if start_time <= end_time:
-            print('25 seconds have passed')
-        else:
-            print('no time')
-
-
-win.after(1000, boost1)
-
-win.after(20000, win_line)
+    obstacle_move = canvas.move(obstacle_item, -15, 0)
+    boost_move = canvas.move(boost_item, -15, 0)
+    win_line_move = canvas.move(win_line2, -15, 0)
 
 
 def game_loop():
     while True:
         track_scroll()
-
         if time.time() > end_time:
             break
 
