@@ -1,10 +1,12 @@
 import tkinter as tk
 import time
+import datetime
 import tk_sleep
+import random
 from tkinter import *
 from PIL import Image, ImageTk
 from tk_sleep import tk_sleep
-
+from datetime import datetime
 
 win = tk.Tk()
 win.geometry('1600x900')  # set window size
@@ -15,35 +17,107 @@ reference_to_image = Canvas(win)
 reference_to_image.image = image1
 
 canvas = Canvas(win, width=1600, height=900)
-canvas.pack(pady=0)
+canvas.pack()
 
+
+track_frame1 = Frame(canvas, height=900, width=1600)
 track_image = Image.open('image/full_track.png')
 track_image1 = ImageTk.PhotoImage(track_image)
 track_frame = canvas.create_image(0, 0, anchor=NW, image=track_image1)
 
-start_time = time.time()
-end_time = (start_time + 25)
-
-#track_image = ImageTk.PhotoImage(Image.open('image/race_track.png'))
-#track_frame = canvas.create_image(0, 0, anchor=NW, image=track_image)
+car_track = Frame(canvas, height=700, width=1600, bg='white')
 
 
-def car():
-    car1_image = Image.open('image/tesla.png')
-    car1_resize = car1_image.resize((214, 92), Image.ANTIALIAS)
-    car1_drive = ImageTk.PhotoImage(car1_resize)
-    car1_frame = canvas.create_image(50, 200, anchor=NW, image=car1_drive)
-
+car_track1 = Image.open('image/tesla.png')
+car_track2 = ImageTk.PhotoImage(car_track1)
+car_track_frame = canvas.create_image(0, 100-800, image=car_track2)
 
 car1_image = Image.open('image/tesla.png')
 car1_resize = car1_image.resize((214, 92), Image.ANTIALIAS)
 car1_drive = ImageTk.PhotoImage(car1_resize)
-car1_frame = canvas.create_image(50, 200, anchor=NW, image=car1_drive)
+car1_frame = canvas.create_image(150, 200, anchor=NW, image=car1_drive)
 
 car2_image = Image.open('image/car2.png')
 car2_resize = car2_image.resize((214, 92), Image.ANTIALIAS)
 car2_drive = ImageTk.PhotoImage(car2_resize)
-car2_frame = canvas.create_image(50, 600, anchor=NW, image=car2_drive)
+car2_frame = canvas.create_image(150, 600, anchor=NW, image=car2_drive)
+
+# car_track.tkraise()
+
+
+def boost1():
+    print('boost1')
+
+
+def boost_scroll():
+    print()
+
+
+obstacle_image = Image.open('image/obstacle.png')
+obstacle_image1 = ImageTk.PhotoImage(obstacle_image)
+obstacle_item = canvas.create_image(
+    1600, random.randint(50, 850), image=obstacle_image1)
+
+boost_image = Image.open('image/boost.png')
+boost_image1 = ImageTk.PhotoImage(boost_image)
+boost_item = canvas.create_image(
+    1600, random.randint(50, 850), image=boost_image1)
+
+
+def boosts():
+    boost_item = canvas.create_image(
+        1600, random.randint(50, 850), image=boost_image1)
+
+
+canvas.after(1000, boosts)
+
+boost2 = time.time() + 3
+boost3 = time.time() + 5
+boost4 = time.time() + 7
+boost5 = time.time() + 9
+boost6 = time.time() + 11
+boost7 = time.time() + 13
+boost8 = time.time() + 15
+boost9 = time.time() + 17
+boost10 = time.time() + 19
+
+obstacle1 = time.time() + 2
+obstacle2 = time.time() + 4
+obstacle3 = time.time() + 6
+obstacle4 = time.time() + 8
+obstacle5 = time.time() + 10
+obstacle6 = time.time() + 12
+obstacle7 = time.time() + 14
+obstacle8 = time.time() + 16
+obstacle9 = time.time() + 18
+
+end_time = time.time() + 20
+
+
+def win_line():
+    print
+
+
+def win_line_scroll():
+    canvas.after(20000, print('game done'))
+    tk_sleep(win, 1/60)
+    track_move = canvas.move(track_frame, -15, 0)
+
+
+def channel_user(user, message):
+    # who is the server (= the creator of the channel)
+    if 'created the channel' in message:
+        name = message.split("'")[1]
+        game_state['is_server'] = name == game_state['me']
+    # who is the opponent (= the one that joined that is not me)
+    if 'joined channel' in message:
+        name = message.split(' ')[1]
+        if name != game_state['me']:
+            game_state['opponent'] = name
+
+#track_image = ImageTk.PhotoImage(Image.open('image/race_track.png'))
+#track_frame = canvas.create_image(0, 0, anchor=NW, image=track_image)
+
 
 '''
 def track():
@@ -59,7 +133,7 @@ def track():
 
 
 def __init__(self, master=None):
-    self.master = ImageTk.PhotoImage(Image.open('image/tesla.png'))
+    self.master = ImageTk.PhotoImage(Image.open())
 
     # to take care movement in x direction
     self.x = 0
@@ -87,18 +161,6 @@ def movement(self):
     self.canvas.after(1000, self.movement)
 
 
-def left(e):
-    x = -20
-    y = 0
-    canvas.move(car1_frame, x, y)
-
-
-def right(e):
-    x = 20
-    y = 0
-    canvas.move(car1_frame, x, y)
-
-
 def up(e):
     x = 0
     y = -20
@@ -109,18 +171,6 @@ def down(e):
     x = 0
     y = 20
     canvas.move(car1_frame, x, y)
-
-
-def left2(e):
-    x = -20
-    y = 0
-    canvas.move(car2_frame, x, y)
-
-
-def righ2t(e):
-    x = 20
-    y = 0
-    canvas.move(car2_frame, x, y)
 
 
 def up2(e):
@@ -137,8 +187,7 @@ def down2(e):
 
 if __name__ == "__main__":
     # Bind the move function
-    #win.bind("<Left>", left)
-    #win.bind("<Right>", right)
+
     win.bind("<Up>", up)
     win.bind("<Down>", down)
     win.bind("<w>", up2)
@@ -148,6 +197,8 @@ if __name__ == "__main__":
 def track_scroll():
     tk_sleep(win, 1/60)
     track_move = canvas.move(track_frame, -15, 0)
+    obstacle_move = canvas.move(obstacle_item, -10, 0)
+    boost_move = canvas.move(boost_item, -10, 0)
 
 
 def game_time():
@@ -161,12 +212,18 @@ def game_time():
             print('no time')
 
 
-def game_start():
+win.after(1000, boost1)
+
+win.after(20000, win_line)
+
+
+def game_loop():
     while True:
         track_scroll()
-        if start_time > end_time:
+
+        if time.time() > end_time:
             break
 
 
-game_start()
+game_loop()
 win.mainloop()
