@@ -3,10 +3,12 @@ import time
 import datetime
 import tk_sleep
 import random
+from network import connect, send
 from tkinter import *
 from PIL import Image, ImageTk
 from tk_sleep import tk_sleep
 from datetime import datetime
+from tkinter import simpledialog
 
 win = tk.Tk()
 win.geometry('1600x900')  # set window size
@@ -15,6 +17,8 @@ img = Image.open("image/race_track.png")
 image1 = ImageTk.PhotoImage(img)
 reference_to_image = Canvas(win)
 reference_to_image.image = image1
+message = Label(track_frame, style='Message.TLabel')
+
 
 canvas = Canvas(win, width=1600, height=900)
 canvas.pack()
@@ -50,7 +54,7 @@ boost_image1 = ImageTk.PhotoImage(boost_image)
 
 win_line = Image.open('image/finishline.png')
 win_line1 = ImageTk.PhotoImage(win_line)
-#win_item = canvas.create_image(1600, 100, anchor=NE, image=win_line1)
+# win_item = canvas.create_image(1600, 100, anchor=NE, image=win_line1)
 
 
 def obstacle_item():
@@ -94,6 +98,21 @@ win.after(18000, obstacle_item)
 win.after(20000, win_line2)
 
 end_time = time.time() + 22
+# some initial variables including a game state
+# (tidy to keep everything in a dictionary
+game_state = {
+    'me': None,
+    'opponent': None,
+    'is_server': None,
+    'shared': {
+        'car1_image': '',
+        'car2_image': '',
+        'track_frame': '',
+        'score_1': '',
+        'score_2': '',
+        'game_over_message': ''
+    }
+}
 
 
 def channel_user(user, message):
@@ -107,8 +126,26 @@ def channel_user(user, message):
         if name != game_state['me']:
             game_state['opponent'] = name
 
-#track_image = ImageTk.PhotoImage(Image.open('image/race_track.png'))
-#track_frame = canvas.create_image(0, 0, anchor=NW, image=track_image)
+# handler for network messages
+
+
+def on_network_message(timestamp, user, message):
+    if user == 'system':
+        channel_user(user, message)
+    # key_downs (only of interest to the server)
+    global keys_down_me, keys_down_opponent
+    if game_state['is_server']:
+        if user == game_state['me'] and type(message) is list:
+            keys_down_me = set(message)
+        if user == game_state['opponent'] and type(message) is list:
+            keys_down_opponent = set(message)
+    # shared state (only of interest to the none-server)
+    if type(message) is dict and not game_state['is_server']:
+        game_state['shared'] = message
+        redraw_screen()
+
+# track_image = ImageTk.PhotoImage(Image.open('image/race_track.png'))
+# track_frame = canvas.create_image(0, 0, anchor=NW, image=track_image)
 
 
 def __init__(self, master=None):
@@ -177,6 +214,24 @@ def game_loop():
         track_scroll()
         if time.time() > end_time:
             break
+
+
+# start - before game loop
+def start():
+    game_state['me'] = simpledialog.askstring(
+        'Input', 'Your user name', parent=win)
+    channel = simpledialog.askstring(
+        'Input', 'Channel', parent=win)
+    connect(channel, game_state['me'], on_network_message)
+    message.config(text='Waiting for an opponent...')
+    message.place(y=200, x=100, width=track_frame - 200)
+    # wait for an opponent
+    while game_state['opponent'] == None:
+        tk_sleep(win, 1 / 10)
+    track_frame.destroy()
+    # start game loop if i am the server
+    if game_state['is_server']:
+        game_loop()
 
 
 game_loop()
