@@ -70,11 +70,6 @@ def win_line2():
     win_line2 = canvas.create_image(1600, 100, anchor=NE, image=win_line1)
 
 
-def win_line_scroll():
-    win_line_scroll
-    canvas.move(win_line2, -500, 0)
-
-
 win.after(1000, boost_item)
 win.after(3000, boost_item)
 win.after(5000, boost_item)
@@ -96,7 +91,7 @@ win.after(14000, obstacle_item)
 win.after(16000, obstacle_item)
 win.after(18000, obstacle_item)
 
-win.after(10000, win_line2)
+win.after(20000, win_line2)
 
 end_time = time.time() + 22
 
@@ -114,19 +109,6 @@ def channel_user(user, message):
 
 #track_image = ImageTk.PhotoImage(Image.open('image/race_track.png'))
 #track_frame = canvas.create_image(0, 0, anchor=NW, image=track_image)
-
-
-'''
-def track():
-    for count in range(10):
-        canvas = Canvas(win)
-        canvas.pack(side=TOP)
-    for counter in range(10):
-        label1 = Label(canvas, image=image1,
-                           borderwidth=0, highlightthickness=0)
-        label1.pack(side=LEFT)
-    return canvas
-'''
 
 
 def __init__(self, master=None):
