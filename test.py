@@ -1,25 +1,20 @@
 import tkinter as tk
 import time
-import datetime
 import tk_sleep
 import random
-import bbox
 from network import connect, send
 from tkinter import *
+from tkinter.ttk import Label
 from PIL import Image, ImageTk
 from tk_sleep import tk_sleep
-from datetime import datetime
-from tkinter import simpledialog
-from bbox import bbox2d
+from tkinter import simpledialog, PhotoImage, Frame
+from window_handler import load_window, start_window_loop
+
 
 win = tk.Tk()
 win.geometry('1600x900')  # set window size
 win.resizable(False, False)  # fix window
-img = Image.open("image/race_track.png")
-image1 = ImageTk.PhotoImage(img)
-reference_to_image = Canvas(win)
-reference_to_image.image = image1
-#message = Label(win, style='Message.TLabel')
+message = Label(win, style='Message.TLabel')
 info_1 = Label(win)
 info_2 = Label(win)
 
@@ -55,7 +50,7 @@ win_line1 = ImageTk.PhotoImage(win_line)
 
 
 def obstacle_item():
-    global obstacle_item
+    obstacle_item
     obstacle_item = canvas.create_image(
         1600, random.randint(150, 750), image=obstacle_image1)
 
@@ -125,7 +120,8 @@ def boost_boundary():
     car1_edge = canvas.bbox(car1_frame)
     car2_edge = canvas.bbox(car2_frame)
     boost_edge = canvas.bbox(boost_item1)
-    if boost_edge[0] < car1_edge[2] < boost_edge[2] and boost_edge[1] < car1_edge[1] < boost_edge[3]:
+    distance = (((boost_item.x-other.x) ** 2) + ((self.y-other.y) ** 2)) ** 0.5
+    if distance < (self.width + other.width)/2.0:
         canvas.move(car1_frame, 100, 0)
         canvas.delete('boost')
         print('collision')
@@ -156,7 +152,35 @@ game_state = {
     }
 }
 
-# Draw the elements (car, obstracle , boost) on the screen
+
+def get_opponent_and_decide_game_runner(user, message):
+    # who is the server (= the creator of the channel)
+    if 'created the channel' in message:
+        name = message.split("'")[1]
+        game_state['is_server'] = name == game_state['me']
+    # who is the opponent (= the one that joined that is not me)
+    if 'joined channel' in message:
+        name = message.split(' ')[1]
+        if name != game_state['me']:
+            game_state['opponent'] = name
+
+
+def on_network_message(timestamp, user, message):
+    if user == 'system':
+        channel_user(user, message)
+    # key_downs (only of interest to the server)
+    global keys_down_me, keys_down_opponent
+    if game_state['is_server']:
+        if user == game_state['me'] and type(message) is list:
+            keys_down_me = set(message)
+        if user == game_state['opponent'] and type(message) is list:
+            keys_down_opponent = set(message)
+    # shared state (only of interest to the none-server)
+    if type(message) is dict and not game_state['is_server']:
+        game_state['shared'] = message
+        redraw_screen()
+
+# Draw the elements (car, obstacle , boost) on the screen
 
 
 def redraw_screen():
@@ -185,22 +209,6 @@ def channel_user(user, message):
             game_state['opponent'] = name
 
 # handler for network messages
-
-
-def on_network_message(timestamp, user, message):
-    if user == 'system':
-        channel_user(user, message)
-    # key_downs (only of interest to the server)
-    global keys_down_me, keys_down_opponent
-    if game_state['is_server']:
-        if user == game_state['me'] and type(message) is list:
-            keys_down_me = set(message)
-        if user == game_state['opponent'] and type(message) is list:
-            keys_down_opponent = set(message)
-    # shared state (only of interest to the none-server)
-    if type(message) is dict and not game_state['is_server']:
-        game_state['shared'] = message
-        redraw_screen()
 
 
 def up(e):
@@ -233,21 +241,43 @@ def down2(e):
     car2_track_boundary('self')
 
 
-if __name__ == "__main__":
-    # Bind the move function
+def on_key_down(keycode):
+    global last_down
+    last_down = keycode
+    if keycode in keys_down:
+        return
+    # add key that is down to keys_down
+    keys_down.add(keycode)
+    send(list(keys_down))  # send keys down via network
 
-    win.bind("<Up>", up)
-    win.bind("<Down>", down)
-    win.bind("<w>", up2)
-    win.bind("<s>", down2)
+
+def on_key_up(keycode):
+    global last_down
+    # ignore false release / auto-repeat
+    # (a release that is followed by a down in
+    # in less than 0.01 seconds is considered false)
+    last_down = None
+    tk_sleep(win, 1 / 1000)
+    if last_down == keycode:
+        return
+    if keycode not in keys_down:
+        return
+    # remove key that is relased from keys_down
+    keycode in keys_down and keys_down.remove(keycode)
+    send(list(keys_down))  # send keys down via network
 
 
-def track_scroll():
-    tk_sleep(win, 1/60)
-    track_move = canvas.move(track_frame, -15, 0)
-    obstacle_move = canvas.move(obstacle_item, -15, 0)
-    boost_move = canvas.move(boost_item, -15, 0)
-    win_line_move = canvas.move(win_line2, -15, 0)
+keys_down_me = set()
+keys_down_opponent = set()
+keys_down = set()  # locally
+last_down = None
+
+win.bind('<Up>', lambda e: on_key_down(38))
+win.bind('<KeyRelease-Up>', lambda e: on_key_up(38))
+win.bind('<Down>', lambda e: on_key_down(40))
+win.bind('<KeyRelease-Down>', lambda e: on_key_up(40))
+win.bind("<w>", up2)
+win.bind("<s>", down2)
 
 
 def win_condition():
@@ -258,29 +288,41 @@ def win_condition():
 
 def game_loop():
     while True:
-        track_scroll()
+        tk_sleep(win, 1/60)
+        track_move = canvas.move(track_frame, -15, 0)
+        canvas.move(obstacle_item, -15, 0)
+        boost_move = canvas.move(boost_item, -15, 0)
+        win_line_move = canvas.move(win_line2, -15, 0)
         win_condition()
         if time.time() > end_time:
             break
 
 
-# start - before game loop
 def start():
+    # hide some things initially
+    ### j('.wait, .ball, .paddle-1, .paddle-2').hide()
+    # show the content/body (hidden by css)
+    # j('body').show()
+    # connect to network
     game_state['me'] = simpledialog.askstring(
-        'Input', 'Your user name', parent=win)
-    channel = simpledialog.askstring(
+        'Input', 'Your user name', parent=canvas)
+    # note: adding prefix so I don't disturb
+    # other class mates / developers using the same
+    # network library
+    channel = 'swak_han' + simpledialog.askstring(
         'Input', 'Channel', parent=win)
     connect(channel, game_state['me'], on_network_message)
     message.config(text='Waiting for an opponent...')
-    message.place(y=200, x=100, width=track_frame - 200)
+    message.place(y=200, x=100, width=1600/2)
     # wait for an opponent
     while game_state['opponent'] == None:
         tk_sleep(win, 1 / 10)
-    track_frame.destroy()
+    message.destroy()
     # start game loop if i am the server
     if game_state['is_server']:
         game_loop()
 
 
+start()
 game_loop()
-win.mainloop()
+win.mainloop(win)
