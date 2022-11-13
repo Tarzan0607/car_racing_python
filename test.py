@@ -17,7 +17,9 @@ img = Image.open("image/race_track.png")
 image1 = ImageTk.PhotoImage(img)
 reference_to_image = Canvas(win)
 reference_to_image.image = image1
-message = Label(track_frame, style='Message.TLabel')
+message = Label(win, style='Message.TLabel')
+info_1 = Label(win)
+info_2 = Label(win)
 
 
 canvas = Canvas(win, width=1600, height=900)
@@ -108,12 +110,41 @@ game_state = {
         'car1_image': '',
         'car2_image': '',
         'track_frame': '',
+        'obstacle_item':'',
         'score_1': '',
         'score_2': '',
+        'boost_image':'',
+        'boost_image1': '',
+        'lives_1': '',
+        'lives_2': '',
+
+
         'game_over_message': ''
     }
 }
 
+# Draw the elements (car, obstracle , boost) on the screen
+
+def redraw_screen():
+    car1_image, car2_image, boost_image, boost_image1,\
+        player_1, player_2, lives_1, lives_2,\
+        score_1, score_2, game_over_message =\
+            game_state['shared'].values()
+    obstacle_item.place(x=boost_image, y=car1_image)
+    obstacle_item.place(x=boost_image1, y=car2_image)
+
+    boost_image.place(x=0, y=car1_image)
+    boost_image1.place(x=980, y=car2_image)
+    info_1.config(text=(
+        f'\nPlayer: {player_1}\n' +
+        f'Score: {score_1}\n' +
+        f'Lives: {lives_1}'
+    ))
+    info_2.config(text=(
+        f'\nPlayer: {player_2[0:10]}\n' +
+        f'Score: {score_2}\n' +
+        f'Lives: {lives_2}'
+    ))
 
 def channel_user(user, message):
     # who is the server (= the creator of the channel)
