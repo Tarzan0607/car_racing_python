@@ -52,7 +52,6 @@ boost_image1 = ImageTk.PhotoImage(boost_image)
 
 win_line = Image.open('image/finishline.png')
 win_line1 = ImageTk.PhotoImage(win_line)
-# win_item = canvas.create_image(1600, 100, anchor=NE, image=win_line1)
 
 
 def obstacle_item():
@@ -135,10 +134,10 @@ def boost_boundary():
 def obstacle_boundary():
     car1_edge = canvas.bbox(car1_frame)
     car2_edge = canvas.bbox(car2_frame)
-    obstacle_edge = canvas.bbox(obstacle_item1)
+    obstacle_edge = canvas.bbox(obstacle_item)
     if obstacle_edge[0] < car1_edge[2] < obstacle_edge[2] and obstacle_edge[1] < car1_edge[1] < obstacle_edge[3]:
         canvas.move(car1_frame, 100, 0)
-        canvas.delete('boost')
+        canvas.delete(boost_item)
         print('collision')
 
 
@@ -149,18 +148,10 @@ game_state = {
     'opponent': None,
     'is_server': None,
     'shared': {
-        'car1_image': '',
-        'car2_image': '',
-        'track_frame': '',
-        'obstacle_item': '',
-        'score_1': '',
-        'score_2': '',
-        'boost_image': '',
-        'boost_image1': '',
-        'lives_1': '',
-        'lives_2': '',
-
-
+        'car1_y': '',
+        'car2_y': '',
+        'obstacle_x': '',
+        'boost_x': '',
         'game_over_message': ''
     }
 }
@@ -169,31 +160,17 @@ game_state = {
 
 
 def redraw_screen():
-    car1_image, car2_image, boost_image, boost_image1,\
-        player_1, player_2, lives_1, lives_2,\
-        score_1, score_2, game_over_message =\
+    car1_y, car2_y, obstacle_x, boost_x,\
+        game_over_message =\
         game_state['shared'].values()
-    obstacle_item.place(x=boost_image, y=car1_image)
-    obstacle_item.place(x=boost_image1, y=car2_image)
-
-    boost_image.place(x=0, y=car1_image)
-    boost_image1.place(x=980, y=car2_image)
-    info_1.config(text=(
-        f'\nPlayer: {player_1}\n' +
-        f'Score: {score_1}\n' +
-        f'Lives: {lives_1}'
-    ))
-    info_2.config(text=(
-        f'\nPlayer: {player_2[0:10]}\n' +
-        f'Score: {score_2}\n' +
-        f'Lives: {lives_2}'
-    ))
-    info_1.place(x=50, y=game_area_height + 50)
-    info_2.place(x=game_area_width - 100, y=game_area_height + 50)
+    car1_frame.place(car1_y)
+    car2_frame.place(car2_y)
+    obstacle_image1.place(x=obstacle_x)
+    boost_image1.place(x=boost_x)
     if game_over_message != '':
         message = Label(win, style='Message.TLabel')
         message.config(text=game_over_message)
-        message.place(y=200, x=100, width=game_area_width - 200)
+        message.place(y=200, x=100, width=win - 200)
 
 
 def channel_user(user, message):
@@ -224,29 +201,6 @@ def on_network_message(timestamp, user, message):
     if type(message) is dict and not game_state['is_server']:
         game_state['shared'] = message
         redraw_screen()
-
-# track_image = ImageTk.PhotoImage(Image.open('image/race_track.png'))
-# track_frame = canvas.create_image(0, 0, anchor=NW, image=track_image)
-
-
-def __init__(self, master=None):
-    self.master = ImageTk.PhotoImage(Image.open())
-
-    # to take care movement in x direction
-    self.x = 0
-    # to take care movement in y direction
-    self.y = 0
-
-    # canvas object to create shape
-    self.canvas = Canvas(master)
-    # creating rectangle
-    self.rectangle = self.canvas.create_rectangle(
-        5, 5, 25, 25, fill="black")
-    self.canvas.pack()
-
-    # calling class's movement method to
-    # move the rectangle
-    self.movement()
 
 
 def up(e):
