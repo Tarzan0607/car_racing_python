@@ -145,6 +145,13 @@ def redraw_screen():
         f'Score: {score_2}\n' +
         f'Lives: {lives_2}'
     ))
+    info_1.place(x=50, y=game_area_height + 50)
+    info_2.place(x=game_area_width - 100, y=game_area_height + 50)
+    if game_over_message != '':
+        message = Label(win, style='Message.TLabel')
+        message.config(text=game_over_message)
+        message.place(y=200, x=100, width=game_area_width - 200)
+    
 
 def channel_user(user, message):
     # who is the server (= the creator of the channel)
