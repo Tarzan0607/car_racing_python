@@ -3,12 +3,14 @@ import time
 import datetime
 import tk_sleep
 import random
+import bbox
 from network import connect, send
 from tkinter import *
 from PIL import Image, ImageTk
 from tk_sleep import tk_sleep
 from datetime import datetime
 from tkinter import simpledialog
+from bbox import bbox2d
 
 win = tk.Tk()
 win.geometry('1600x900')  # set window size
@@ -17,7 +19,7 @@ img = Image.open("image/race_track.png")
 image1 = ImageTk.PhotoImage(img)
 reference_to_image = Canvas(win)
 reference_to_image.image = image1
-message = Label(win, style='Message.TLabel')
+#message = Label(win, style='Message.TLabel')
 info_1 = Label(win)
 info_2 = Label(win)
 
@@ -26,17 +28,11 @@ canvas = Canvas(win, width=1600, height=900)
 canvas.pack()
 
 
-track_frame1 = Frame(canvas, height=900, width=1600)
+track_frame1 = Frame(canvas, width=1600, height=900, )
 track_image = Image.open('image/full_track.png')
 track_image1 = ImageTk.PhotoImage(track_image)
 track_frame = canvas.create_image(0, 0, anchor=NW, image=track_image1)
 
-car_track = Frame(canvas, height=700, width=1600, bg='white')
-
-
-car_track1 = Image.open('image/tesla.png')
-car_track2 = ImageTk.PhotoImage(car_track1)
-car_track_frame = canvas.create_image(0, 100-800, image=car_track2)
 
 car1_image = Image.open('image/tesla.png')
 car1_resize = car1_image.resize((214, 92), Image.ANTIALIAS)
@@ -76,30 +72,76 @@ def win_line2():
     win_line2 = canvas.create_image(1600, 100, anchor=NE, image=win_line1)
 
 
-win.after(1000, boost_item)
-win.after(3000, boost_item)
-win.after(5000, boost_item)
-win.after(7000, boost_item)
-win.after(9000, boost_item)
-win.after(11000, boost_item)
-win.after(13000, boost_item)
-win.after(15000, boost_item)
-win.after(17000, boost_item)
-win.after(19000, boost_item)
+canvas.after(1000, boost_item)
+canvas.after(3000, boost_item)
+canvas.after(5000, boost_item)
+canvas.after(7000, boost_item)
+canvas.after(9000, boost_item)
+canvas.after(11000, boost_item)
+canvas.after(13000, boost_item)
+canvas.after(15000, boost_item)
+canvas.after(17000, boost_item)
+canvas.after(19000, boost_item)
 
-win.after(2000, obstacle_item)
-win.after(4000, obstacle_item)
-win.after(6000, obstacle_item)
-win.after(8000, obstacle_item)
-win.after(10000, obstacle_item)
-win.after(12000, obstacle_item)
-win.after(14000, obstacle_item)
-win.after(16000, obstacle_item)
-win.after(18000, obstacle_item)
+canvas.after(2000, obstacle_item)
+canvas.after(4000, obstacle_item)
+canvas.after(6000, obstacle_item)
+canvas.after(8000, obstacle_item)
+canvas.after(10000, obstacle_item)
+canvas.after(12000, obstacle_item)
+canvas.after(14000, obstacle_item)
+canvas.after(16000, obstacle_item)
+canvas.after(18000, obstacle_item)
 
-win.after(20000, win_line2)
+canvas.after(20000, win_line2)
 
 end_time = time.time() + 22
+
+
+def car1_track_boundary(self):
+    car1_edge = canvas.bbox(car1_frame)
+    car1_left = car1_edge[0]
+    car1_top = car1_edge[1]
+    car1_right = car1_edge[2]
+    car1_bottom = car1_edge[3]
+    if car1_top < 720:
+        canvas.move(car1_frame, 0, 15)
+    if car1_bottom > 180:
+        canvas.move(car1_frame, 0, -15)
+
+
+def car2_track_boundary(self):
+    car2_edge = canvas.bbox(car2_frame)
+    car2_left = car2_edge[0]
+    car2_top = car2_edge[1]
+    car2_right = car2_edge[2]
+    car2_bottom = car2_edge[3]
+    if car2_top < 720:
+        canvas.move(car2_frame, 0, 15)
+    if car2_bottom > 180:
+        canvas.move(car2_frame, 0, -15)
+
+
+def boost_boundary():
+    car1_edge = canvas.bbox(car1_frame)
+    car2_edge = canvas.bbox(car2_frame)
+    boost_edge = canvas.bbox(boost_item1)
+    if boost_edge[0] < car1_edge[2] < boost_edge[2] and boost_edge[1] < car1_edge[1] < boost_edge[3]:
+        canvas.move(car1_frame, 100, 0)
+        canvas.delete('boost')
+        print('collision')
+
+
+def obstacle_boundary():
+    car1_edge = canvas.bbox(car1_frame)
+    car2_edge = canvas.bbox(car2_frame)
+    obstacle_edge = canvas.bbox(obstacle_item1)
+    if obstacle_edge[0] < car1_edge[2] < obstacle_edge[2] and obstacle_edge[1] < car1_edge[1] < obstacle_edge[3]:
+        canvas.move(car1_frame, 100, 0)
+        canvas.delete('boost')
+        print('collision')
+
+
 # some initial variables including a game state
 # (tidy to keep everything in a dictionary
 game_state = {
@@ -110,10 +152,10 @@ game_state = {
         'car1_image': '',
         'car2_image': '',
         'track_frame': '',
-        'obstacle_item':'',
+        'obstacle_item': '',
         'score_1': '',
         'score_2': '',
-        'boost_image':'',
+        'boost_image': '',
         'boost_image1': '',
         'lives_1': '',
         'lives_2': '',
@@ -125,11 +167,12 @@ game_state = {
 
 # Draw the elements (car, obstracle , boost) on the screen
 
+
 def redraw_screen():
     car1_image, car2_image, boost_image, boost_image1,\
         player_1, player_2, lives_1, lives_2,\
         score_1, score_2, game_over_message =\
-            game_state['shared'].values()
+        game_state['shared'].values()
     obstacle_item.place(x=boost_image, y=car1_image)
     obstacle_item.place(x=boost_image1, y=car2_image)
 
@@ -151,7 +194,7 @@ def redraw_screen():
         message = Label(win, style='Message.TLabel')
         message.config(text=game_over_message)
         message.place(y=200, x=100, width=game_area_width - 200)
-    
+
 
 def channel_user(user, message):
     # who is the server (= the creator of the channel)
@@ -208,26 +251,32 @@ def __init__(self, master=None):
 
 def up(e):
     x = 0
-    y = -20
+    y = -15
     canvas.move(car1_frame, x, y)
+    car1_track_boundary('self')
+    obstacle_boundary()
 
 
 def down(e):
     x = 0
-    y = 20
+    y = 15
     canvas.move(car1_frame, x, y)
+    car1_track_boundary('self')
+    obstacle_boundary()
 
 
 def up2(e):
     x = 0
-    y = -20
+    y = -15
     canvas.move(car2_frame, x, y)
+    car2_track_boundary('self')
 
 
 def down2(e):
     x = 0
-    y = 20
+    y = 15
     canvas.move(car2_frame, x, y)
+    car2_track_boundary('self')
 
 
 if __name__ == "__main__":
@@ -247,9 +296,16 @@ def track_scroll():
     win_line_move = canvas.move(win_line2, -15, 0)
 
 
+def win_condition():
+    car1_edge = canvas.bbox(car1_frame)
+    car2_edge = canvas.bbox(car2_frame)
+    win_edge = canvas.bbox(win_line2)
+
+
 def game_loop():
     while True:
         track_scroll()
+        win_condition()
         if time.time() > end_time:
             break
 
