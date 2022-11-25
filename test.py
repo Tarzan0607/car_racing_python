@@ -1,14 +1,14 @@
 import tkinter as tk
 import time
-import tk_sleep
 import random
 from network import connect, send
 from tkinter import *
 from tkinter.ttk import Label
 from PIL import Image, ImageTk
 from tk_sleep import tk_sleep
-from tkinter import simpledialog, PhotoImage, Frame
+from tkinter import simpledialog, PhotoImage, Frame, messagebox
 from window_handler import load_window, start_window_loop
+from random import randint
 
 
 win = tk.Tk()
@@ -17,6 +17,14 @@ win.resizable(False, False)  # fix window
 message = Label(win, style='Message.TLabel')
 info_1 = Label(win)
 info_2 = Label(win)
+obstacle_item = None
+boost_item = None
+win_line2 = None
+#car1_right = None
+#car2_right = None
+#win_line_left = None
+end_time = time.time() + 18
+end_time1 = time.time() + 22
 
 
 canvas = Canvas(win, width=1600, height=900)
@@ -49,47 +57,44 @@ win_line = Image.open('image/finishline.png')
 win_line1 = ImageTk.PhotoImage(win_line)
 
 
-def obstacle_item():
-    obstacle_item
+# some initial variables including a game state
+# (tidy to keep everything in a dictionary
+game_state = {
+    'me': None,
+    'opponent': None,
+    'is_server': None,
+    'shared': {
+        'car1_x': '',
+        'car1_y': 200,
+        'car2_x': '',
+        'car2_y': 600,
+        'obstacle_x': '',
+        'obstacle_y': '',
+        'boost_x': '',
+        'boost_y': '',
+        'game_over_message': ''
+    }
+}
+
+
+def create_obstacle_item():
+    global obstacle_item
     obstacle_item = canvas.create_image(
         1600, random.randint(150, 750), image=obstacle_image1)
+    return obstacle_item
 
 
-def boost_item():
+def create_boost_item():
     global boost_item
     boost_item = canvas.create_image(
         1600, random.randint(150, 750), image=boost_image1)
+    return boost_item
 
 
-def win_line2():
+def create_win_line2():
     global win_line2
     win_line2 = canvas.create_image(1600, 100, anchor=NE, image=win_line1)
-
-
-canvas.after(1000, boost_item)
-canvas.after(3000, boost_item)
-canvas.after(5000, boost_item)
-canvas.after(7000, boost_item)
-canvas.after(9000, boost_item)
-canvas.after(11000, boost_item)
-canvas.after(13000, boost_item)
-canvas.after(15000, boost_item)
-canvas.after(17000, boost_item)
-canvas.after(19000, boost_item)
-
-canvas.after(2000, obstacle_item)
-canvas.after(4000, obstacle_item)
-canvas.after(6000, obstacle_item)
-canvas.after(8000, obstacle_item)
-canvas.after(10000, obstacle_item)
-canvas.after(12000, obstacle_item)
-canvas.after(14000, obstacle_item)
-canvas.after(16000, obstacle_item)
-canvas.after(18000, obstacle_item)
-
-canvas.after(20000, win_line2)
-
-end_time = time.time() + 22
+    return win_line2
 
 
 def car1_track_boundary(self):
@@ -116,41 +121,62 @@ def car2_track_boundary(self):
         canvas.move(car2_frame, 0, -15)
 
 
+def car1_boundary(self):
+    car1_edge = canvas.bbox(car1_frame)
+    car1_left = car1_edge[0]
+    car1_top = car1_edge[1]
+    car1_right = car1_edge[2]
+    car1_bottom = car1_edge[3]
+
+
+def car2_boundary(self):
+    car2_edge = canvas.bbox(car2_frame)
+    car2_left = car2_edge[0]
+    car2_top = car2_edge[1]
+    car2_right = car2_edge[2]
+    car2_bottom = car2_edge[3]
+
+
 def boost_boundary():
     car1_edge = canvas.bbox(car1_frame)
     car2_edge = canvas.bbox(car2_frame)
-    boost_edge = canvas.bbox(boost_item1)
-    distance = (((boost_item.x-other.x) ** 2) + ((self.y-other.y) ** 2)) ** 0.5
-    if distance < (self.width + other.width)/2.0:
-        canvas.move(car1_frame, 100, 0)
-        canvas.delete('boost')
-        print('collision')
+    boost_edge = canvas.bbox(boost_item)
+    if boost_edge[0] in range(car2_edge[2], boost_edge[2]) and boost_edge[1] in range(car2_edge[1], boost_edge[3]):
+        canvas.move(car2_frame, 50, 0)
+        print('boost!')
+    if boost_edge[0] in range(car1_edge[2], boost_edge[2]) and boost_edge[1] in range(car1_edge[1], boost_edge[3]):
+        canvas.move(car1_frame, 50, 0)
+        print('boost!')
 
 
 def obstacle_boundary():
     car1_edge = canvas.bbox(car1_frame)
     car2_edge = canvas.bbox(car2_frame)
     obstacle_edge = canvas.bbox(obstacle_item)
-    if obstacle_edge[0] < car1_edge[2] < obstacle_edge[2] and obstacle_edge[1] < car1_edge[1] < obstacle_edge[3]:
-        canvas.move(car1_frame, 100, 0)
-        canvas.delete(boost_item)
-        print('collision')
+    if obstacle_edge[0] < car1_edge[0] < obstacle_edge[2] and obstacle_edge[1] < car1_edge[1] < obstacle_edge[3]:
+        canvas.move(car1_frame, -50, 0)
+        print('obstacle collision')
+    if obstacle_edge[0] < car2_edge[0] < obstacle_edge[2] and obstacle_edge[1] < car2_edge[1] < obstacle_edge[3]:
+        canvas.move(car2_frame, -50, 0)
+        print('obstacle collision')
 
 
-# some initial variables including a game state
-# (tidy to keep everything in a dictionary
-game_state = {
-    'me': None,
-    'opponent': None,
-    'is_server': None,
-    'shared': {
-        'car1_y': '',
-        'car2_y': '',
-        'obstacle_x': '',
-        'boost_x': '',
-        'game_over_message': ''
-    }
-}
+def win_condition():
+    car1_edge = canvas.bbox(car1_frame)
+    car1_right = car1_edge[2]
+    car2_edge = canvas.bbox(car2_frame)
+    car2_right = car2_edge[2]
+    win_line_edge = canvas.bbox(win_line2)
+    win_line_left = win_line_edge[0]
+    if car1_right and car2_right > win_line_left:
+        messagebox.showinfo("It's a tie", "It's a tie")
+        return None
+    if car1_right > win_line_left:
+        messagebox.showinfo('Red car wins!', 'Red car wins!')
+        return None
+    if car2_right > win_line_left:
+        messagebox.showinfo('Blue car wins!', 'Blue car wins!')
+        return None
 
 
 def get_opponent_and_decide_game_runner(user, message):
@@ -167,7 +193,7 @@ def get_opponent_and_decide_game_runner(user, message):
 
 def on_network_message(timestamp, user, message):
     if user == 'system':
-        channel_user(user, message)
+        get_opponent_and_decide_game_runner(user, message)
     # key_downs (only of interest to the server)
     global keys_down_me, keys_down_opponent
     if game_state['is_server']:
@@ -179,36 +205,23 @@ def on_network_message(timestamp, user, message):
     if type(message) is dict and not game_state['is_server']:
         game_state['shared'] = message
         redraw_screen()
+# handler for network messages
 
-# Draw the elements (car, obstacle , boost) on the screen
+# Draw the elements (cars, obstacle , boost) on the screen
 
 
 def redraw_screen():
-    car1_y, car2_y, obstacle_x, boost_x,\
+    car1_x, car1_y, car2_x, car2_y, obstacle_x, obstacle_y, boost_x, boost_y, \
         game_over_message =\
         game_state['shared'].values()
-    car1_frame.place(car1_y)
-    car2_frame.place(car2_y)
-    obstacle_image1.place(x=obstacle_x)
-    boost_image1.place(x=boost_x)
+    car1_frame.place(x=(car1_x + 150), y=car1_y)
+    car2_frame.place(x=(car2_x + 150), y=car2_y)
+    obstacle_image1.place(x=obstacle_x, y=obstacle_y)
+    boost_image1.place(x=boost_x, y=boost_y)
     if game_over_message != '':
         message = Label(win, style='Message.TLabel')
         message.config(text=game_over_message)
         message.place(y=200, x=100, width=win - 200)
-
-
-def channel_user(user, message):
-    # who is the server (= the creator of the channel)
-    if 'created the channel' in message:
-        name = message.split("'")[1]
-        game_state['is_server'] = name == game_state['me']
-    # who is the opponent (= the one that joined that is not me)
-    if 'joined channel' in message:
-        name = message.split(' ')[1]
-        if name != game_state['me']:
-            game_state['opponent'] = name
-
-# handler for network messages
 
 
 def up(e):
@@ -232,6 +245,7 @@ def up2(e):
     y = -15
     canvas.move(car2_frame, x, y)
     car2_track_boundary('self')
+    boost_boundary()
 
 
 def down2(e):
@@ -239,6 +253,7 @@ def down2(e):
     y = 15
     canvas.move(car2_frame, x, y)
     car2_track_boundary('self')
+    boost_boundary()
 
 
 def on_key_down(keycode):
@@ -276,53 +291,63 @@ win.bind('<Up>', lambda e: on_key_down(38))
 win.bind('<KeyRelease-Up>', lambda e: on_key_up(38))
 win.bind('<Down>', lambda e: on_key_down(40))
 win.bind('<KeyRelease-Down>', lambda e: on_key_up(40))
-win.bind("<w>", up2)
-win.bind("<s>", down2)
-
-
-def win_condition():
-    car1_edge = canvas.bbox(car1_frame)
-    car2_edge = canvas.bbox(car2_frame)
-    win_edge = canvas.bbox(win_line2)
+#win.bind("<w>", up2)
+#win.bind("<s>", down2)
 
 
 def game_loop():
+    shared = game_state['shared']
+    car1_x, car1_y, car2_x, car2_y, obstacle_x, obstacle_y, boost_x, boost_y = list(
+        shared.values())[0:8]
+    shared['player_1'] = game_state['me']
+    shared['player_2'] = game_state['opponent']
     while True:
-        tk_sleep(win, 1/60)
-        track_move = canvas.move(track_frame, -15, 0)
-        canvas.move(obstacle_item, -15, 0)
-        boost_move = canvas.move(boost_item, -15, 0)
-        win_line_move = canvas.move(win_line2, -15, 0)
-        win_condition()
+        tk_sleep(win, 1/30)
+        canvas.move(track_frame, -25, 0)
+        # canvas.bbox(ALL)
+        #canvas.after(18000, create_win_line2)
+        if obstacle_item is None:
+            create_obstacle_item()
+        if obstacle_item is not None:
+            canvas.move(obstacle_item, -35, 0)
+            obstacle_boundary()
+            if obstacle_item < 0:
+                canvas.delete(obstacle_item)
+        if boost_item is None:
+            create_boost_item()
+        if boost_item is not None:
+            canvas.move(boost_item, -35, 0)
+            boost_boundary()
+            if boost_item < 0:
+                canvas.delete(boost_item)
+        if 38 in keys_down_me:
+            up()
+        if 40 in keys_down_me:
+            down()
+        if 38 in keys_down_opponent:
+            up2()
+        if 40 in keys_down_opponent:
+            down2()
         if time.time() > end_time:
+            create_win_line2()
+        if win_line2 is not None:
+            canvas.move(win_line2, -25, 0)
+            win_condition()
+        if time.time() > end_time1:
+            break
+        shared['car1_x'] = car1_x
+        shared['car1_y'] = car1_y
+        shared['car2_x'] = car2_x
+        shared['car1_y'] = car2_y
+        shared['obstacle_x'] = obstacle_x
+        shared['obstacle_y'] = obstacle_y
+        shared['boost_x'] = boost_x
+        shared['boost_y'] = boost_y
+        send(game_state['shared'])
+        # redraw_screen()
+        if shared['game_over_message'] != '':
             break
 
 
-def start():
-    # hide some things initially
-    ### j('.wait, .ball, .paddle-1, .paddle-2').hide()
-    # show the content/body (hidden by css)
-    # j('body').show()
-    # connect to network
-    game_state['me'] = simpledialog.askstring(
-        'Input', 'Your user name', parent=canvas)
-    # note: adding prefix so I don't disturb
-    # other class mates / developers using the same
-    # network library
-    channel = 'swak_han' + simpledialog.askstring(
-        'Input', 'Channel', parent=win)
-    connect(channel, game_state['me'], on_network_message)
-    message.config(text='Waiting for an opponent...')
-    message.place(y=200, x=100, width=1600/2)
-    # wait for an opponent
-    while game_state['opponent'] == None:
-        tk_sleep(win, 1 / 10)
-    message.destroy()
-    # start game loop if i am the server
-    if game_state['is_server']:
-        game_loop()
-
-
-start()
 game_loop()
 win.mainloop(win)
