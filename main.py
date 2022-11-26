@@ -128,6 +128,10 @@ def boost_boundary():
     if boost_edge[0] < car1_edge[2] < boost_edge[2] and boost_edge[1] < car1_edge[1] < boost_edge[3]:
         canvas.move(car1_frame, 50, 0)
         print('boost!')
+    if boost_edge[2] < -50:
+        canvas.delete(boost_item)
+        print('deleting boost')
+        create_boost_item()
 
 
 def obstacle_boundary():
@@ -140,6 +144,10 @@ def obstacle_boundary():
     if obstacle_edge[0] < car2_edge[2] < obstacle_edge[2] and obstacle_edge[1] < car2_edge[1] < obstacle_edge[3]:
         canvas.move(car2_frame, -50, 0)
         print('obstacle collision')
+    if obstacle_edge[2] < -50:
+        canvas.delete(obstacle_item)
+        print('deleting obstacle')
+        create_obstacle_item()
 
 
 def win_condition():
