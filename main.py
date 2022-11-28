@@ -122,12 +122,16 @@ def boost_boundary():
     car1_edge = canvas.bbox(car1_frame)
     car2_edge = canvas.bbox(car2_frame)
     boost_edge = canvas.bbox(boost_item)
-    if boost_edge[0] < car2_edge[2] < boost_edge[2] and boost_edge[1] < car2_edge[1] < boost_edge[3]:
-        canvas.move(car2_frame, 50, 0)
-        print('boost!')
-    if boost_edge[0] < car1_edge[2] < boost_edge[2] and boost_edge[1] < car1_edge[1] < boost_edge[3]:
+    if boost_edge[0] < car1_edge[2] < boost_edge[2] and (boost_edge[1] - 35) < car1_edge[1] < (boost_edge[3] + 35):
         canvas.move(car1_frame, 50, 0)
+        canvas.delete(boost_item)
         print('boost!')
+        create_boost_item()
+    if boost_edge[0] < car2_edge[2] < boost_edge[2] and (boost_edge[1] - 35) < car2_edge[1] < (boost_edge[3] + 35):
+        canvas.move(car2_frame, 50, 0)
+        canvas.delete(boost_item)
+        print('boost!')
+        create_boost_item()
     if boost_edge[2] < -50:
         canvas.delete(boost_item)
         print('deleting boost')
@@ -138,12 +142,16 @@ def obstacle_boundary():
     car1_edge = canvas.bbox(car1_frame)
     car2_edge = canvas.bbox(car2_frame)
     obstacle_edge = canvas.bbox(obstacle_item)
-    if obstacle_edge[0] < car1_edge[2] < obstacle_edge[2] and obstacle_edge[1] < car1_edge[1] < obstacle_edge[3]:
+    if obstacle_edge[0] < car1_edge[2] < obstacle_edge[2] and (obstacle_edge[1] - 35) < car1_edge[1] < (obstacle_edge[3] + 35):
         canvas.move(car1_frame, -50, 0)
+        canvas.delete(obstacle_item)
         print('obstacle collision')
-    if obstacle_edge[0] < car2_edge[2] < obstacle_edge[2] and obstacle_edge[1] < car2_edge[1] < obstacle_edge[3]:
+        create_obstacle_item()
+    if obstacle_edge[0] < car2_edge[2] < obstacle_edge[2] and (obstacle_edge[1] - 35) < car2_edge[1] < (obstacle_edge[3] + 35):
         canvas.move(car2_frame, -50, 0)
+        canvas.delete(obstacle_item)
         print('obstacle collision')
+        create_obstacle_item()
     if obstacle_edge[2] < -50:
         canvas.delete(obstacle_item)
         print('deleting obstacle')
@@ -237,6 +245,7 @@ def up(e):
     canvas.move(car1_frame, x, y)
     car1_track_boundary('self')
     obstacle_boundary()
+    on_key_down(2300)
 
 
 def down(e):
@@ -245,6 +254,7 @@ def down(e):
     canvas.move(car1_frame, x, y)
     car1_track_boundary('self')
     obstacle_boundary()
+    on_key_down(2302)
 
 
 def up2(e):
@@ -292,9 +302,10 @@ keys_down_opponent = set()
 keys_down = set()  # locally
 last_down = None
 
-win.bind('<Up>', lambda e: on_key_down(38))
+# uparrow 2300 0x8FC, downarrow 2302 0x8FE
+win.bind('<Up>', up)
 win.bind('<KeyRelease-Up>', lambda e: on_key_up(38))
-win.bind('<Down>', lambda e: on_key_down(40))
+win.bind('<Down>', down)
 win.bind('<KeyRelease-Down>', lambda e: on_key_up(40))
 #win.bind("<w>", up2)
 #win.bind("<s>", down2)
@@ -309,7 +320,7 @@ def game_loop():
     while True:
         tk_sleep(win, 1/30)
         canvas.move(track_frame, -25, 0)
-        canvas.bbox(ALL)
+        # canvas.bbox(ALL)
         canvas.after(18000, create_win_line2)
         # if randint(1, 80) == 1:
         #    create_obstacle_item()

@@ -22,7 +22,6 @@ boost_item = None
 win_line2 = None
 #car1_right = None
 #car2_right = None
-#win_line_left = None
 end_time = time.time() + 18
 end_time1 = time.time() + 22
 
@@ -93,7 +92,8 @@ def create_boost_item():
 
 def create_win_line2():
     global win_line2
-    win_line2 = canvas.create_image(1600, 100, anchor=NE, image=win_line1)
+    win_line2 = canvas.create_image(1600, 450, image=win_line1)
+    print('creating win line')
     return win_line2
 
 
@@ -121,6 +121,7 @@ def car2_track_boundary(self):
         canvas.move(car2_frame, 0, -15)
 
 
+'''
 def car1_boundary(self):
     car1_edge = canvas.bbox(car1_frame)
     car1_left = car1_edge[0]
@@ -135,18 +136,23 @@ def car2_boundary(self):
     car2_top = car2_edge[1]
     car2_right = car2_edge[2]
     car2_bottom = car2_edge[3]
+'''
 
 
 def boost_boundary():
     car1_edge = canvas.bbox(car1_frame)
     car2_edge = canvas.bbox(car2_frame)
     boost_edge = canvas.bbox(boost_item)
-    if boost_edge[0] in range(car2_edge[2], boost_edge[2]) and boost_edge[1] in range(car2_edge[1], boost_edge[3]):
-        canvas.move(car2_frame, 50, 0)
-        print('boost!')
-    if boost_edge[0] in range(car1_edge[2], boost_edge[2]) and boost_edge[1] in range(car1_edge[1], boost_edge[3]):
+    if boost_edge[0] < car1_edge[2] < boost_edge[2] and (boost_edge[1] - 35) < car1_edge[1] < (boost_edge[3] + 35):
         canvas.move(car1_frame, 50, 0)
+        canvas.delete(boost_item)
         print('boost!')
+        create_boost_item()
+    if boost_edge[0] < car2_edge[2] < boost_edge[2] and (boost_edge[1] - 35) < car2_edge[1] < (boost_edge[3] + 35):
+        canvas.move(car2_frame, 50, 0)
+        canvas.delete(boost_item)
+        print('boost!')
+        create_boost_item()
     if boost_edge[2] < -50:
         canvas.delete(boost_item)
         print('deleting boost')
@@ -157,12 +163,16 @@ def obstacle_boundary():
     car1_edge = canvas.bbox(car1_frame)
     car2_edge = canvas.bbox(car2_frame)
     obstacle_edge = canvas.bbox(obstacle_item)
-    if obstacle_edge[0] < car1_edge[0] < obstacle_edge[2] and obstacle_edge[1] < car1_edge[1] < obstacle_edge[3]:
+    if obstacle_edge[0] < car1_edge[2] < obstacle_edge[2] and (obstacle_edge[1] - 35) < car1_edge[1] < (obstacle_edge[3] + 35):
         canvas.move(car1_frame, -50, 0)
+        canvas.delete(obstacle_item)
         print('obstacle collision')
-    if obstacle_edge[0] < car2_edge[0] < obstacle_edge[2] and obstacle_edge[1] < car2_edge[1] < obstacle_edge[3]:
+        create_obstacle_item()
+    if obstacle_edge[0] < car2_edge[2] < obstacle_edge[2] and (obstacle_edge[1] - 35) < car2_edge[1] < (obstacle_edge[3] + 35):
         canvas.move(car2_frame, -50, 0)
+        canvas.delete(obstacle_item)
         print('obstacle collision')
+        create_obstacle_item()
     if obstacle_edge[2] < -50:
         canvas.delete(obstacle_item)
         print('deleting obstacle')
@@ -238,6 +248,7 @@ def up(e):
     canvas.move(car1_frame, x, y)
     car1_track_boundary('self')
     obstacle_boundary()
+    on_key_down(2300)
 
 
 def down(e):
@@ -246,6 +257,7 @@ def down(e):
     canvas.move(car1_frame, x, y)
     car1_track_boundary('self')
     obstacle_boundary()
+    on_key_down(2302)
 
 
 def up2(e):
@@ -269,6 +281,7 @@ def on_key_down(keycode):
     last_down = keycode
     if keycode in keys_down:
         return
+    print('network press down')
     # add key that is down to keys_down
     keys_down.add(keycode)
     send(list(keys_down))  # send keys down via network
@@ -285,6 +298,7 @@ def on_key_up(keycode):
         return
     if keycode not in keys_down:
         return
+    print('network press release')
     # remove key that is relased from keys_down
     keycode in keys_down and keys_down.remove(keycode)
     send(list(keys_down))  # send keys down via network
@@ -295,12 +309,12 @@ keys_down_opponent = set()
 keys_down = set()  # locally
 last_down = None
 
-win.bind('<Up>', lambda e: on_key_down(38))
-win.bind('<KeyRelease-Up>', lambda e: on_key_up(38))
-win.bind('<Down>', lambda e: on_key_down(40))
-win.bind('<KeyRelease-Down>', lambda e: on_key_up(40))
-#win.bind("<w>", up2)
-#win.bind("<s>", down2)
+win.bind('<Up>', up)
+win.bind('<KeyRelease-Up>', lambda e: on_key_up(2300))
+win.bind('<Down>', down, lambda e: on_key_down(88))
+win.bind('<KeyRelease-Down>', down, lambda e: on_key_up(88))
+win.bind("<w>", up2)
+win.bind("<s>", down2)
 
 
 def game_loop():
@@ -313,21 +327,20 @@ def game_loop():
         tk_sleep(win, 1/30)
         canvas.move(track_frame, -25, 0)
         # canvas.bbox(ALL)
-        #canvas.after(18000, create_win_line2)
+        canvas.after(5000, create_win_line2)
         if obstacle_item is None:
             create_obstacle_item()
         if obstacle_item is not None:
             canvas.move(obstacle_item, -35, 0)
             obstacle_boundary()
-            if obstacle_item < 0:
-                canvas.delete(obstacle_item)
         if boost_item is None:
             create_boost_item()
         if boost_item is not None:
             canvas.move(boost_item, -35, 0)
             boost_boundary()
-            if boost_item < 0:
-                canvas.delete(boost_item)
+        if win_line2 is not None:
+            canvas.move(win_line2, -25, 0)
+            win_condition()
         if 38 in keys_down_me:
             up()
         if 40 in keys_down_me:
@@ -336,11 +349,6 @@ def game_loop():
             up2()
         if 40 in keys_down_opponent:
             down2()
-        if time.time() > end_time:
-            create_win_line2()
-        if win_line2 is not None:
-            canvas.move(win_line2, -25, 0)
-            win_condition()
         if time.time() > end_time1:
             break
         shared['car1_x'] = car1_x
