@@ -55,6 +55,26 @@ win_line = Image.open('image/finishline.png')
 win_line1 = ImageTk.PhotoImage(win_line)
 
 
+# some initial variables including a game state
+# (tidy to keep everything in a dictionary
+game_state = {
+    'me': None,
+    'opponent': None,
+    'is_server': None,
+    'shared': {
+        'car1_x': '',
+        'car1_y': 200,
+        'car2_x': '',
+        'car2_y': 600,
+        'obstacle_x': '',
+        'obstacle_y': '',
+        'boost_x': '',
+        'boost_y': '',
+        'game_over_message': ''
+    }
+}
+
+
 def create_obstacle_item():
     global obstacle_item
     obstacle_item = canvas.create_image(
@@ -71,11 +91,9 @@ def create_boost_item():
 
 def create_win_line2():
     global win_line2
-    win_line2 = canvas.create_image(1600, 100, anchor=NE, image=win_line1)
+    win_line2 = canvas.create_image(1600, 450, image=win_line1)
+    print('creating win line')
     return win_line2
-
-
-canvas.after(18000, create_win_line2)
 
 
 def car1_track_boundary(self):
@@ -102,32 +120,16 @@ def car2_track_boundary(self):
         canvas.move(car2_frame, 0, -15)
 
 
-def car1_boundary(self):
-    car1_edge = canvas.bbox(car1_frame)
-    car1_left = car1_edge[0]
-    car1_top = car1_edge[1]
-    car1_right = car1_edge[2]
-    car1_bottom = car1_edge[3]
-
-
-def car2_boundary(self):
-    car2_edge = canvas.bbox(car2_frame)
-    car2_left = car2_edge[0]
-    car2_top = car2_edge[1]
-    car2_right = car2_edge[2]
-    car2_bottom = car2_edge[3]
-
-
 def boost_boundary():
     car1_edge = canvas.bbox(car1_frame)
     car2_edge = canvas.bbox(car2_frame)
     boost_edge = canvas.bbox(boost_item)
-    if boost_edge[0] < car1_edge[2] < boost_edge[2] and (boost_edge[1] - 35) < car1_edge[1] < (boost_edge[3] + 35):
+    if boost_edge[0] < car1_edge[2] and (boost_edge[1] - 45) < car1_edge[1] < (boost_edge[3] + 45):
         canvas.move(car1_frame, 50, 0)
         canvas.delete(boost_item)
         print('boost!')
         create_boost_item()
-    if boost_edge[0] < car2_edge[2] < boost_edge[2] and (boost_edge[1] - 35) < car2_edge[1] < (boost_edge[3] + 35):
+    if (boost_edge[0] - 35) < car2_edge[2] and (boost_edge[1] - 45) < car2_edge[1] < (boost_edge[3] + 45):
         canvas.move(car2_frame, 50, 0)
         canvas.delete(boost_item)
         print('boost!')
@@ -142,12 +144,12 @@ def obstacle_boundary():
     car1_edge = canvas.bbox(car1_frame)
     car2_edge = canvas.bbox(car2_frame)
     obstacle_edge = canvas.bbox(obstacle_item)
-    if obstacle_edge[0] < car1_edge[2] < obstacle_edge[2] and (obstacle_edge[1] - 35) < car1_edge[1] < (obstacle_edge[3] + 35):
+    if obstacle_edge[0] < car1_edge[2] and (obstacle_edge[1] - 45) < car1_edge[1] < (obstacle_edge[3] + 45):
         canvas.move(car1_frame, -50, 0)
         canvas.delete(obstacle_item)
         print('obstacle collision')
         create_obstacle_item()
-    if obstacle_edge[0] < car2_edge[2] < obstacle_edge[2] and (obstacle_edge[1] - 35) < car2_edge[1] < (obstacle_edge[3] + 35):
+    if obstacle_edge[0] < car2_edge[2] and (obstacle_edge[1] - 45) < car2_edge[1] < (obstacle_edge[3] + 45):
         canvas.move(car2_frame, -50, 0)
         canvas.delete(obstacle_item)
         print('obstacle collision')
@@ -165,32 +167,15 @@ def win_condition():
     car2_right = car2_edge[2]
     win_line_edge = canvas.bbox(win_line2)
     win_line_left = win_line_edge[0]
-    if car1_right and car2_right > win_line_left:
-        messagebox.showinfo("It's a tie")
     if car1_right > win_line_left:
-        messagebox.showinfo('Red car wins!')
+        messagebox.showinfo('Red car wins!', 'Red car wins!')
+        return None
     if car2_right > win_line_left:
-        messagebox.showinfo('Blue car wins!')
-
-
-# some initial variables including a game state
-# (tidy to keep everything in a dictionary
-game_state = {
-    'me': None,
-    'opponent': None,
-    'is_server': None,
-    'shared': {
-        'car1_x': '',
-        'car1_y': 200,
-        'car2_x': '',
-        'car2_y': 600,
-        'obstacle_x': '',
-        'obstacle_y': '',
-        'boost_x': '',
-        'boost_y': '',
-        'game_over_message': ''
-    }
-}
+        messagebox.showinfo('Blue car wins!', 'Blue car wins!')
+        return None
+    if car1_right and car2_right > win_line_left:
+        messagebox.showinfo("It's a tie", "It's a tie")
+        return None
 
 
 def get_opponent_and_decide_game_runner(user, message):
@@ -321,37 +306,29 @@ def game_loop():
         tk_sleep(win, 1/30)
         canvas.move(track_frame, -25, 0)
         # canvas.bbox(ALL)
-        canvas.after(18000, create_win_line2)
-        # if randint(1, 80) == 1:
-        #    create_obstacle_item()
-        canvas.after(1000, create_obstacle_item)
         if obstacle_item is None:
             create_obstacle_item()
         if obstacle_item is not None:
             canvas.move(obstacle_item, -35, 0)
             obstacle_boundary()
-            if obstacle_item < 0:
-                canvas.delete(obstacle_item)
         if boost_item is None:
             create_boost_item()
         if boost_item is not None:
             canvas.move(boost_item, -35, 0)
             boost_boundary()
-            if boost_item < 0:
-                canvas.delete(boost_item)
-        if 38 in keys_down_me:
-            up()
-        if 40 in keys_down_me:
-            down()
-        if 38 in keys_down_opponent:
-            up2()
-        if 40 in keys_down_opponent:
-            down2()
-        if time.time() > end_time:
+        if time.time() > end_time and win_line2 is None:
             create_win_line2()
         if win_line2 is not None:
             canvas.move(win_line2, -25, 0)
             win_condition()
+        if 2300 in keys_down_me:
+            up()
+        if 2302 in keys_down_me:
+            down()
+        if 2300 in keys_down_opponent:
+            up2()
+        if 2302 in keys_down_opponent:
+            down2()
         if time.time() > end_time1:
             break
         shared['car1_x'] = car1_x

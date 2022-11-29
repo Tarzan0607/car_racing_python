@@ -143,12 +143,12 @@ def boost_boundary():
     car1_edge = canvas.bbox(car1_frame)
     car2_edge = canvas.bbox(car2_frame)
     boost_edge = canvas.bbox(boost_item)
-    if boost_edge[0] < car1_edge[2] < boost_edge[2] and (boost_edge[1] - 35) < car1_edge[1] < (boost_edge[3] + 35):
+    if boost_edge[0] < car1_edge[2] and (boost_edge[1] - 45) < car1_edge[1] < (boost_edge[3] + 45):
         canvas.move(car1_frame, 50, 0)
         canvas.delete(boost_item)
         print('boost!')
         create_boost_item()
-    if boost_edge[0] < car2_edge[2] < boost_edge[2] and (boost_edge[1] - 35) < car2_edge[1] < (boost_edge[3] + 35):
+    if (boost_edge[0] - 35) < car2_edge[2] and (boost_edge[1] - 45) < car2_edge[1] < (boost_edge[3] + 45):
         canvas.move(car2_frame, 50, 0)
         canvas.delete(boost_item)
         print('boost!')
@@ -163,12 +163,12 @@ def obstacle_boundary():
     car1_edge = canvas.bbox(car1_frame)
     car2_edge = canvas.bbox(car2_frame)
     obstacle_edge = canvas.bbox(obstacle_item)
-    if obstacle_edge[0] < car1_edge[2] < obstacle_edge[2] and (obstacle_edge[1] - 35) < car1_edge[1] < (obstacle_edge[3] + 35):
+    if obstacle_edge[0] < car1_edge[2] and (obstacle_edge[1] - 45) < car1_edge[1] < (obstacle_edge[3] + 45):
         canvas.move(car1_frame, -50, 0)
         canvas.delete(obstacle_item)
         print('obstacle collision')
         create_obstacle_item()
-    if obstacle_edge[0] < car2_edge[2] < obstacle_edge[2] and (obstacle_edge[1] - 35) < car2_edge[1] < (obstacle_edge[3] + 35):
+    if obstacle_edge[0] < car2_edge[2] and (obstacle_edge[1] - 45) < car2_edge[1] < (obstacle_edge[3] + 45):
         canvas.move(car2_frame, -50, 0)
         canvas.delete(obstacle_item)
         print('obstacle collision')
@@ -186,15 +186,12 @@ def win_condition():
     car2_right = car2_edge[2]
     win_line_edge = canvas.bbox(win_line2)
     win_line_left = win_line_edge[0]
-    if car1_right and car2_right > win_line_left:
-        messagebox.showinfo("It's a tie", "It's a tie")
-        return None
     if car1_right > win_line_left:
         messagebox.showinfo('Red car wins!', 'Red car wins!')
-        return None
     if car2_right > win_line_left:
         messagebox.showinfo('Blue car wins!', 'Blue car wins!')
-        return None
+    if car1_right and car2_right > win_line_left:
+        messagebox.showinfo("It's a tie", "It's a tie")
 
 
 def get_opponent_and_decide_game_runner(user, message):
@@ -311,8 +308,8 @@ last_down = None
 
 win.bind('<Up>', up)
 win.bind('<KeyRelease-Up>', lambda e: on_key_up(2300))
-win.bind('<Down>', down, lambda e: on_key_down(88))
-win.bind('<KeyRelease-Down>', down, lambda e: on_key_up(88))
+win.bind('<Down>', down, lambda e: on_key_down(2302))
+win.bind('<KeyRelease-Down>', down, lambda e: on_key_up(2302))
 win.bind("<w>", up2)
 win.bind("<s>", down2)
 
@@ -327,7 +324,6 @@ def game_loop():
         tk_sleep(win, 1/30)
         canvas.move(track_frame, -25, 0)
         # canvas.bbox(ALL)
-        canvas.after(5000, create_win_line2)
         if obstacle_item is None:
             create_obstacle_item()
         if obstacle_item is not None:
@@ -338,6 +334,8 @@ def game_loop():
         if boost_item is not None:
             canvas.move(boost_item, -35, 0)
             boost_boundary()
+        if time.time() > end_time and win_line2 is None:
+            create_win_line2()
         if win_line2 is not None:
             canvas.move(win_line2, -25, 0)
             win_condition()
